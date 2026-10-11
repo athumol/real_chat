@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'provider/auth_provider.dart';
+import 'screens/login_screen.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -13,11 +14,12 @@ class AuthGate extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user == null) {
-          return const Scaffold(
-            body: Center(
-              child: Text('Login Screen'),
-            ),
-          );
+          // return const Scaffold(
+          //   body: Center(
+          //     child: Text('Login Screen'),
+          //   ),
+          // );
+          return const LoginScreen();
         }
 
         return const Scaffold(
