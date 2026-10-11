@@ -16,68 +16,66 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-Future<void> _login() async {
-  final email = _emailController.text.trim();
-  final password = _passwordController.text;
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-  if (email.isEmpty || password.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Please enter your email and password.'),
-      ),
-    );
-    return;
-  }
-
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-  } on FirebaseAuthException catch (e) {
-    if (!mounted) return;
-
-    String message;
-
-    switch (e.code) {
-      case 'user-not-found':
-      case 'invalid-credential':
-      case 'wrong-password':
-        message = 'Invalid email or password.';
-        break;
-      case 'invalid-email':
-        message = 'Please enter a valid email address.';
-        break;
-      case 'too-many-requests':
-        message = 'Too many attempts. Please try again later.';
-        break;
-      default:
-        message = e.message ?? 'Login failed. Please try again.';
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your email and password.')),
+      );
+      return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  } catch (_) {
-    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Something went wrong. Please try again.'),
-      ),
-    );
-  } finally {
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+
+      switch (e.code) {
+        case 'user-not-found':
+        case 'invalid-credential':
+        case 'wrong-password':
+          message = 'Invalid email or password.';
+          break;
+        case 'invalid-email':
+          message = 'Please enter a valid email address.';
+          break;
+        case 'too-many-requests':
+          message = 'Too many attempts. Please try again later.';
+          break;
+        default:
+          message = e.message ?? 'Login failed. Please try again.';
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-}
 
   @override
   void dispose() {
@@ -97,20 +95,14 @@ Future<void> _login() async {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.chat_bubble_rounded,
-                    size: 80,
-                  ),
+                  const Icon(Icons.chat_bubble_rounded, size: 80),
 
                   const SizedBox(height: 24),
 
                   const Text(
                     'Welcome to Real Chat',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 8),
@@ -118,10 +110,7 @@ Future<void> _login() async {
                   const Text(
                     'Login to continue chatting',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
 
                   const SizedBox(height: 40),
@@ -167,13 +156,16 @@ Future<void> _login() async {
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Firebase login will be added next.
-                      },
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                      onPressed: _isLoading ? null : _login,
+
+                      // Firebase login will be added next.
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Login', style: TextStyle(fontSize: 16)),
                     ),
                   ),
 
