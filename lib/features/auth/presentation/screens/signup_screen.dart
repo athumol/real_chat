@@ -1,14 +1,17 @@
-
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:real_chat/core/providers/usecase_providers.dart';
+import 'package:real_chat/data/models/user_model.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _nameController = TextEditingController();
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -17,6 +20,113 @@ class _SignupScreenState extends State<SignupScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
+
+  Future<void> _signup() async {
+    final name = _nameController.text.trim();
+    final username = _usernameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (name.isEmpty ||
+        username.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
+      _showMessage('Please fill in all fields.');
+      return;
+    }
+
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username)) {
+      _showMessage(
+        'Username can contain only letters, numbers, and underscores.',
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      _showMessage('Password must be at least 6 characters.');
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showMessage('Passwords do not match.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      final user = credential.user;
+
+      if (user == null) {
+        throw Exception('Account creation failed.');
+      }
+
+      await ref
+          .read(createUserProvider)
+          .call(
+            UserModel(
+              uid: user.uid,
+              name: name,
+              username: username,
+              phoneNumber: '',
+              email: email,
+              isOnline: true,
+              createdAt: DateTime.now(),
+              lastSeen: DateTime.now(),
+            ),
+          );
+
+      if (!mounted) return;
+
+      _showMessage('Account created successfully!');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      switch (e.code) {
+        case 'email-already-in-use':
+          _showMessage('This email is already registered.');
+          break;
+        case 'invalid-email':
+          _showMessage('Please enter a valid email address.');
+          break;
+        case 'weak-password':
+          _showMessage('Please choose a stronger password.');
+          break;
+        case 'operation-not-allowed':
+          _showMessage('Email/password sign-up is not enabled in Firebase.');
+          break;
+        default:
+          _showMessage(e.message ?? 'Registration failed.');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Signup/Profile Save Error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      _showMessage('Registration error: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   void dispose() {
@@ -52,10 +162,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Create Account'), centerTitle: true),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -63,18 +170,12 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.person_add_alt_1_rounded,
-                  size: 72,
-                ),
+                const Icon(Icons.person_add_alt_1_rounded, size: 72),
                 const SizedBox(height: 16),
                 const Text(
                   'Join Real Chat',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -134,8 +235,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   suffixIcon: IconButton(
                     onPressed: () {
                       setState(() {
-                        _obscureConfirmPassword =
-                            !_obscureConfirmPassword;
+                        _obscureConfirmPassword = !_obscureConfirmPassword;
                       });
                     },
                     icon: Icon(
@@ -150,13 +250,17 @@ class _SignupScreenState extends State<SignupScreen> {
                 SizedBox(
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Registration functionality will be added next.
-                    },
-                    child: const Text(
-                      'Create Account',
-                      style: TextStyle(fontSize: 16),
-                    ),
+                    onPressed: _isLoading ? null : _signup,
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Create Account',
+                            style: TextStyle(fontSize: 16),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 16),
