@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'provider/auth_provider.dart';
 import 'screens/login_screen.dart';
+import 'package:real_chat/features/home/presentation/screens/home_screen.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -22,26 +23,14 @@ class AuthGate extends ConsumerWidget {
           return const LoginScreen();
         }
 
-        return const Scaffold(
-          body: Center(
-            child: Text('Home Screen'),
-          ),
-        );
+        return const HomeScreen();
       },
       loading: () {
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
       error: (error, stackTrace) {
         return Scaffold(
-          body: Center(
-            child: Text(
-              'Authentication error: $error',
-            ),
-          ),
+          body: Center(child: Text('Authentication error: $error')),
         );
       },
     );

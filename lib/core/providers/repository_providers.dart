@@ -8,6 +8,7 @@ import '../../data/repositories/user_repository_impl.dart';
 import '../../domain/repositories/user_repository.dart';
 import 'firebase_providers.dart';
 
+
 final userRepositoryProvider = Provider<UserRepository>((ref) {
   final firestore = ref.read(firestoreProvider);
 

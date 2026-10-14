@@ -10,17 +10,116 @@ class FriendRepositoryImpl implements FriendRepository {
 
   FriendRepositoryImpl({required this.firestore});
   @override
-  Future<void> sendFriendRequest({
-    required String senderId,
-    required String receiverId,
-  }) async {
-    await firestore.collection(FirestoreConstants.friendRequests).add({
-      'senderId': senderId,
-      'receiverId': receiverId,
-      'status': AppConstants.pending,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+  
+
+@override
+Future<void> sendFriendRequest({
+  required String senderId,
+  required String receiverId,
+}) async {
+  if (senderId == receiverId) {
+    throw Exception('You cannot add yourself as a friend.');
   }
+
+  final requests =
+      firestore.collection(FirestoreConstants.friendRequests);
+
+  // Check whether a pending request already exists.
+  final outgoing = await requests
+      .where('senderId', isEqualTo: senderId)
+      .where('receiverId', isEqualTo: receiverId)
+      .where('status', isEqualTo: AppConstants.pending)
+      .limit(1)
+      .get();
+
+  if (outgoing.docs.isNotEmpty) {
+    throw Exception('Friend request already sent.');
+  }
+
+  // Check whether the other person has already requested you.
+  final incoming = await requests
+      .where('senderId', isEqualTo: receiverId)
+      .where('receiverId', isEqualTo: senderId)
+      .where('status', isEqualTo: AppConstants.pending)
+      .limit(1)
+      .get();
+
+  if (incoming.docs.isNotEmpty) {
+    throw Exception(
+      'This person has already sent you a request.',
+    );
+  }
+
+  // Check whether you are already friends.
+  final friendship = await firestore
+      .collection(FirestoreConstants.users)
+      .doc(senderId)
+      .collection(FirestoreConstants.friends)
+      .doc(receiverId)
+      .get();
+
+  if (friendship.exists) {
+    throw Exception('You are already friends.');
+  }
+
+  await requests.add({
+    'senderId': senderId,
+    'receiverId': receiverId,
+    'status': AppConstants.pending,
+    'createdAt': FieldValue.serverTimestamp(),
+  });
+}
+// Future<void> sendFriendRequest({
+//   required String senderId,
+//   required String receiverId,
+// }) async {
+//   if (senderId == receiverId) {
+//     throw ArgumentError('You cannot send a friend request to yourself.');
+//   }
+
+//   final requests = firestore.collection(FirestoreConstants.friendRequests);
+
+//   final existingOutgoing = await requests
+//       .where('senderId', isEqualTo: senderId)
+//       .where('receiverId', isEqualTo: receiverId)
+//       .where('status', isEqualTo: AppConstants.pending)
+//       .limit(1)
+//       .get();
+
+//   if (existingOutgoing.docs.isNotEmpty) {
+//     throw StateError('A friend request is already pending.');
+//   }
+
+//   final existingIncoming = await requests
+//       .where('senderId', isEqualTo: receiverId)
+//       .where('receiverId', isEqualTo: senderId)
+//       .where('status', isEqualTo: AppConstants.pending)
+//       .limit(1)
+//       .get();
+
+//   if (existingIncoming.docs.isNotEmpty) {
+//     throw StateError('This user has already sent you a friend request.');
+//   }
+
+//   final existingFriend = await firestore
+//       .collection(FirestoreConstants.users)
+//       .doc(senderId)
+//       .collection(FirestoreConstants.friends)
+//       .doc(receiverId)
+//       .get();
+
+//   if (existingFriend.exists) {
+//     throw StateError('You are already friends.');
+//   }
+
+//   await requests.add({
+//     'senderId': senderId,
+//     'receiverId': receiverId,
+//     'status': AppConstants.pending,
+//     'createdAt': FieldValue.serverTimestamp(),
+//   });
+// }
+
 
   @override
   Future<void> acceptFriendRequest({
