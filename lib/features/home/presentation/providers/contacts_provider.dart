@@ -22,6 +22,14 @@ final friendsProvider = StreamProvider.family<List<FriendModel>, String>((
 ) {
   return ref.read(friendRepositoryProvider).getFriends(userId);
 });
+final incomingRequestsProvider =
+    StreamProvider.family<List<FriendRequestModel>, String>(
+  (ref, userId) {
+    return ref
+        .read(friendRepositoryProvider)
+        .getIncomingRequests(userId);
+  },
+);
 // final outgoingRequestsProvider =
 //     StreamProvider.family<List<FriendRequestModel>, String>(
 //   (ref, userId) {
