@@ -167,19 +167,32 @@ Future<void> sendFriendRequest({
         .update({'status': AppConstants.rejected});
   }
 
-  @override
-  Stream<List<FriendRequestModel>> getIncomingRequests(String userId) {
-    return firestore
-        .collection(FirestoreConstants.friendRequests)
-        .where('receiverId', isEqualTo: userId)
-        .where('status', isEqualTo: AppConstants.pending)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => FriendRequestModel.fromMap(doc.data(), doc.id))
-              .toList();
-        });
-  }
+ @override
+Stream<List<FriendRequestModel>> getIncomingRequests(
+  String userId,
+) {
+  print('Incoming requests query UID: $userId');
+
+  return firestore
+      .collection(FirestoreConstants.friendRequests)
+      .where('receiverId', isEqualTo: userId)
+      .where('status', isEqualTo: AppConstants.pending)
+      .snapshots()
+      .map((snapshot) {
+        print(
+          'Incoming requests found: ${snapshot.docs.length}',
+        );
+
+        return snapshot.docs
+            .map(
+              (doc) => FriendRequestModel.fromMap(
+                doc.data(),
+                doc.id,
+              ),
+            )
+            .toList();
+      });
+}
 
   @override
   Stream<List<FriendRequestModel>> getOutgoingRequests(String userId) {
