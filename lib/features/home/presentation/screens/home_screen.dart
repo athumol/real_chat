@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:real_chat/core/theme/app_theme.dart';
 import 'contacts_tab.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'requests_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -134,6 +135,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: _selectedIndex == 1
                   ? const ContactsTab()
+                  : _selectedIndex == 2
+                  ? RequestsTab()
                   : Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,

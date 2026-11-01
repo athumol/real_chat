@@ -65,94 +65,54 @@ class FriendRepositoryImpl implements FriendRepository {
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
-  // Future<void> sendFriendRequest({
-  //   required String senderId,
-  //   required String receiverId,
-  // }) async {
-  //   if (senderId == receiverId) {
-  //     throw ArgumentError('You cannot send a friend request to yourself.');
-  //   }
+  
+  
+@override
+Future<void> acceptFriendRequest({
+  required FriendRequestModel request,
+}) async {
+  final batch = firestore.batch();
 
-  //   final requests = firestore.collection(FirestoreConstants.friendRequests);
+  // Update friend request status
+  final requestRef = firestore
+      .collection(FirestoreConstants.friendRequests)
+      .doc(request.id);
 
-  //   final existingOutgoing = await requests
-  //       .where('senderId', isEqualTo: senderId)
-  //       .where('receiverId', isEqualTo: receiverId)
-  //       .where('status', isEqualTo: AppConstants.pending)
-  //       .limit(1)
-  //       .get();
+  batch.update(requestRef, {
+    'status': AppConstants.accepted,
+  });
 
-  //   if (existingOutgoing.docs.isNotEmpty) {
-  //     throw StateError('A friend request is already pending.');
-  //   }
+  // Create friendship for sender
+  final senderFriendRef = firestore
+      .collection(FirestoreConstants.users)
+      .doc(request.senderId)
+      .collection(FirestoreConstants.friends)
+      .doc(request.receiverId);
 
-  //   final existingIncoming = await requests
-  //       .where('senderId', isEqualTo: receiverId)
-  //       .where('receiverId', isEqualTo: senderId)
-  //       .where('status', isEqualTo: AppConstants.pending)
-  //       .limit(1)
-  //       .get();
+  batch.set(senderFriendRef, {
+    'friendUid': request.receiverId,
+    'friendSince': FieldValue.serverTimestamp(),
+    'isBlocked': false,
+    'isPinned': false,
+  });
 
-  //   if (existingIncoming.docs.isNotEmpty) {
-  //     throw StateError('This user has already sent you a friend request.');
-  //   }
+  // Create friendship for receiver
+  final receiverFriendRef = firestore
+      .collection(FirestoreConstants.users)
+      .doc(request.receiverId)
+      .collection(FirestoreConstants.friends)
+      .doc(request.senderId);
 
-  //   final existingFriend = await firestore
-  //       .collection(FirestoreConstants.users)
-  //       .doc(senderId)
-  //       .collection(FirestoreConstants.friends)
-  //       .doc(receiverId)
-  //       .get();
+  batch.set(receiverFriendRef, {
+    'friendUid': request.senderId,
+    'friendSince': FieldValue.serverTimestamp(),
+    'isBlocked': false,
+    'isPinned': false,
+  });
 
-  //   if (existingFriend.exists) {
-  //     throw StateError('You are already friends.');
-  //   }
+  await batch.commit();
+}
 
-  //   await requests.add({
-  //     'senderId': senderId,
-  //     'receiverId': receiverId,
-  //     'status': AppConstants.pending,
-  //     'createdAt': FieldValue.serverTimestamp(),
-  //   });
-  // }
-
-  @override
-  Future<void> acceptFriendRequest({
-    required FriendRequestModel request,
-  }) async {
-    final batch = firestore.batch();
-    //update request status
-    final requestRef = firestore
-        .collection(FirestoreConstants.friendRequests)
-        .doc(request.id);
-
-    batch.update(requestRef, {'status': AppConstants.accepted});
-    //create friendship for sender
-    final senderFriendRef = firestore
-        .collection(FirestoreConstants.users)
-        .doc(request.senderId)
-        .collection(FirestoreConstants.friends)
-        .doc(request.receiverId);
-
-    batch.set(senderFriendRef, {
-      'friendId': request.receiverId,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    //create friendship for receiver
-    final receiverFriendRef = firestore
-        .collection(FirestoreConstants.users)
-        .doc(request.receiverId)
-        .collection(FirestoreConstants.friends)
-        .doc(request.senderId);
-
-    batch.set(receiverFriendRef, {
-      'friendId': request.senderId,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    await batch.commit();
-  }
 
   @override
   Future<void> rejectFriendRequest({required String requestId}) async {

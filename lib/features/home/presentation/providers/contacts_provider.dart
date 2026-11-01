@@ -30,18 +30,4 @@ final incomingRequestsProvider =
         .getIncomingRequests(userId);
   },
 );
-// final outgoingRequestsProvider =
-//     StreamProvider.family<List<FriendRequestModel>, String>(
-//   (ref, userId) {
-//     return ref
-//         .read(friendRepositoryProvider)
-//         .getOutgoingRequests(userId);
-//   },
-// );
 
-// final friendsProvider =
-//     StreamProvider.family<List<FriendModel>, String>(
-//   (ref, userId) {
-//     return ref.read(friendRepositoryProvider).getFriends(userId);
-//   },
-// );
