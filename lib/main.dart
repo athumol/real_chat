@@ -26,11 +26,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("main is working123");
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Real Chat',
       theme: AppTheme.darkTheme,
       home: const AuthGate(),
     );
+
   }
 }

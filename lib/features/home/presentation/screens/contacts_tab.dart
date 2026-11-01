@@ -12,6 +12,7 @@ class ContactsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    print("contact tab is working123");
     final usersAsync = ref.watch(allUsersProvider);
 
     return usersAsync.when(
@@ -71,6 +72,7 @@ class _ContactTileState extends ConsumerState<_ContactTile> {
   bool _isSending = false;
 
   Future<void> _sendFriendRequest(String senderId) async {
+    print("send friendrequest starting 123");
     if (_isSending) return;
 
     setState(() => _isSending = true);

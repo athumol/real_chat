@@ -18,6 +18,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
 
   Future<void> _login() async {
+    print("login fuction is working123");
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
@@ -87,6 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("login screen is working123");
     return Scaffold(
       body: SafeArea(
         child: Padding(

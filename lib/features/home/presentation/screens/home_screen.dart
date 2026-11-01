@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:real_chat/core/theme/app_theme.dart';
 import 'contacts_tab.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,6 +12,39 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+
+  Future<void> _signOut() async {
+    print("log out function is working123");
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Log out?'),
+        content: const Text('Are you sure you want to log out of real_chat?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Log out'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout != true || !mounted) return;
+
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unable to log out: $error')));
+    }
+  }
 
   static const List<String> _titles = [
     'Chats',
@@ -28,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("home screen is working123");
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -43,6 +78,11 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {},
             icon: const Icon(Icons.search_rounded),
             tooltip: 'Search',
+          ),
+          IconButton(
+            onPressed: _signOut,
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Log out',
           ),
           const SizedBox(width: 8),
         ],

@@ -10,6 +10,7 @@ class AuthGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    print("authgate is working123");
     final authState = ref.watch(authStateProvider);
 
     return authState.when(
